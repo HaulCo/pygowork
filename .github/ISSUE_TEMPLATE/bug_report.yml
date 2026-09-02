@@ -1,0 +1,54 @@
+name: 🐞 Bug report
+description: Something in pygowork misbehaves on its own (no Go pools involved).
+labels: [bug]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. If the problem only shows up when Go and Python pools share a namespace, use the Go interop report instead.
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproducible example
+      description: Smallest script that shows the problem.
+      value: |
+        ```python
+
+        ```
+    validations:
+      required: true
+  - type: input
+    id: pygowork_version
+    attributes:
+      label: pygowork version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: python_version
+    attributes:
+      label: Python version
+      placeholder: "3.12.4"
+    validations:
+      required: true
+  - type: input
+    id: redis_version
+    attributes:
+      label: Redis server version
+      placeholder: "7.2.5"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output
+      description: Anything relevant from the worker's logs.
+      render: text

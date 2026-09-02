@@ -1,0 +1,35 @@
+name: 💡 Feature request
+description: Propose an addition or change to pygowork.
+labels: [enhancement]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        pygowork tracks gocraft/work v0.5.1. Features upstream already has are easy to say yes to; features that grow the surface beyond upstream carry a high bar, because every extra behavior is something interop can disagree about.
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you want
+      description: The behavior you are after, and the problem it solves.
+    validations:
+      required: true
+  - type: dropdown
+    id: upstream
+    attributes:
+      label: Does gocraft/work have this?
+      options:
+        - Yes, upstream has it and pygowork does not
+        - No, this would be new surface
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: api
+    attributes:
+      label: Proposed API
+      description: Rough sketch of how it would look to a caller.
+      value: |
+        ```python
+
+        ```

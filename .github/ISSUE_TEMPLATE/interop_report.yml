@@ -1,0 +1,54 @@
+name: 🤝 Go interop report
+description: Go and Python pools on the same namespace disagree about something.
+labels: [bug, interop]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Interop reports are the most valuable issues this project gets. Compatibility with gocraft/work is the product, so anything the Go side and the Python side disagree on is a bug in pygowork until proven otherwise.
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened
+      description: What you saw, and what the Go fleet does in the same situation.
+    validations:
+      required: true
+  - type: dropdown
+    id: direction
+    attributes:
+      label: Direction
+      options:
+        - Python produces, Go consumes
+        - Go produces, Python consumes
+        - Mixed pools on one namespace (heartbeats, requeuer, reaper)
+        - Admin client reading a Go fleet
+    validations:
+      required: true
+  - type: textarea
+    id: fleet
+    attributes:
+      label: Fleet layout
+      description: Which pools run where, which job names each registers, and the namespace(s) involved.
+    validations:
+      required: true
+  - type: input
+    id: gocraft_version
+    attributes:
+      label: gocraft/work version on the Go side
+      placeholder: v0.5.1
+    validations:
+      required: true
+  - type: input
+    id: pygowork_version
+    attributes:
+      label: pygowork version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: textarea
+    id: keys
+    attributes:
+      label: Relevant Redis keys
+      description: "redis-cli output for the keys involved (queue lists, zset entries, heartbeat hashes) helps enormously. Redact anything sensitive in job args."
+      render: text

@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pygowork"
+version = "0.1.0"
+description = "gocraft/work compatible job queue client for Python: enqueue and process Redis-backed jobs interoperably with Go worker pools"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+dependencies = ["redis", "croniter"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pygowork = ["lua/*", "py.typed"]
