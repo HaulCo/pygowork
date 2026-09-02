@@ -12,7 +12,9 @@ from pygowork.cron import parse_go_duration
 
 def test_six_field_spec_with_seconds():
     schedule = Schedule("30 0 * * * *")
-    assert schedule.next_after(datetime(2026, 1, 1, 12, 0, 0)) == datetime(2026, 1, 1, 12, 0, 30)
+    assert schedule.next_after(datetime(2026, 1, 1, 12, 0, 0)) == datetime(
+        2026, 1, 1, 12, 0, 30
+    )
 
 
 def test_next_after_is_strictly_after():
@@ -23,12 +25,16 @@ def test_next_after_is_strictly_after():
 
 def test_hourly_descriptor():
     schedule = Schedule("@hourly")
-    assert schedule.next_after(datetime(2026, 1, 1, 0, 30, 15)) == datetime(2026, 1, 1, 1, 0, 0)
+    assert schedule.next_after(datetime(2026, 1, 1, 0, 30, 15)) == datetime(
+        2026, 1, 1, 1, 0, 0
+    )
 
 
 def test_daily_and_midnight_descriptors_agree():
     moment = datetime(2026, 1, 1, 13, 30, 0)
-    assert Schedule("@daily").next_after(moment) == Schedule("@midnight").next_after(moment)
+    assert Schedule("@daily").next_after(moment) == Schedule("@midnight").next_after(
+        moment
+    )
     assert Schedule("@daily").next_after(moment) == datetime(2026, 1, 2, 0, 0, 0)
 
 

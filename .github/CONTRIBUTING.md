@@ -28,7 +28,7 @@ You need Python 3.12+ and a local Redis on the default port.
 git clone https://github.com/HaulCo/pygowork
 cd pygowork
 python3 -m venv venv && source venv/bin/activate
-pip install -e . pytest
+pip install -e . pytest black
 make test
 ```
 
@@ -49,6 +49,7 @@ by patching.
 
 ## style
 
+- Formatting is black's (`make format`); no arguments with the formatter.
 - Descriptive names everywhere; no single-letter variables, including loop
   indices and lambdas.
 - Real classes over dicts on the public surface (see `job.py` and the

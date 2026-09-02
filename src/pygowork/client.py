@@ -73,7 +73,9 @@ class Client:
         return f"{self.namespace}:{suffix}"
 
     def _known_job_queues(self) -> list[str]:
-        names = sorted(member.decode() for member in self.redis.smembers(self._key("known_jobs")))
+        names = sorted(
+            member.decode() for member in self.redis.smembers(self._key("known_jobs"))
+        )
         return [self._key(f"jobs:{name}") for name in names]
 
     # -- introspection --
@@ -89,9 +91,17 @@ class Client:
                     worker_pool_id=pool_id,
                     heartbeat_at=int(fields.get("heartbeat_at", 0)),
                     started_at=int(fields.get("started_at", 0)),
-                    job_names=fields["job_names"].split(",") if fields.get("job_names") else [],
+                    job_names=(
+                        fields["job_names"].split(",")
+                        if fields.get("job_names")
+                        else []
+                    ),
                     concurrency=int(fields.get("concurrency", 0)),
-                    worker_ids=fields["worker_ids"].split(",") if fields.get("worker_ids") else [],
+                    worker_ids=(
+                        fields["worker_ids"].split(",")
+                        if fields.get("worker_ids")
+                        else []
+                    ),
                     host=fields.get("host", ""),
                     pid=int(fields.get("pid", 0)),
                 )
@@ -110,10 +120,18 @@ class Client:
                         is_busy=bool(fields),
                         job_name=fields.get("job_name"),
                         job_id=fields.get("job_id"),
-                        started_at=int(fields["started_at"]) if fields.get("started_at") else None,
+                        started_at=(
+                            int(fields["started_at"])
+                            if fields.get("started_at")
+                            else None
+                        ),
                         args_json=fields.get("args") or None,
                         checkin=fields.get("checkin"),
-                        checkin_at=int(fields["checkin_at"]) if fields.get("checkin_at") else None,
+                        checkin_at=(
+                            int(fields["checkin_at"])
+                            if fields.get("checkin_at")
+                            else None
+                        ),
                     )
                 )
         return observations
@@ -128,7 +146,11 @@ class Client:
                 oldest = self.redis.lindex(queue_key, -1)
                 if oldest:
                     latency = now - Job.from_wire(oldest).enqueued_at
-            queues.append(Queue(job_name=queue_key.rsplit(":", 1)[-1], count=count, latency=latency))
+            queues.append(
+                Queue(
+                    job_name=queue_key.rsplit(":", 1)[-1], count=count, latency=latency
+                )
+            )
         return queues
 
     # -- zset pages, 20 per page, 1-based, mirroring getZsetPage --
@@ -166,7 +188,13 @@ class Client:
     def retry_dead_job(self, died_at: int, job_id: str) -> int:
         keys = [self._key("dead")] + self._known_job_queues()
         return self.redis.eval(
-            REQUEUE_SINGLE_DEAD, len(keys), *keys, self._key("jobs:"), int(time.time()), died_at, job_id
+            REQUEUE_SINGLE_DEAD,
+            len(keys),
+            *keys,
+            self._key("jobs:"),
+            int(time.time()),
+            died_at,
+            job_id,
         )
 
     def retry_all_dead_jobs(self) -> int:
@@ -179,7 +207,12 @@ class Client:
         requeued = 0
         for _ in range(REQUEUE_ALL_BATCH):
             moved = self.redis.eval(
-                REQUEUE_ALL_DEAD, len(keys), *keys, self._key("jobs:"), now, REQUEUE_ALL_BATCH
+                REQUEUE_ALL_DEAD,
+                len(keys),
+                *keys,
+                self._key("jobs:"),
+                now,
+                REQUEUE_ALL_BATCH,
             )
             if moved == 0:
                 break

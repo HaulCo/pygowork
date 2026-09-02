@@ -59,7 +59,9 @@ def job_on_queue(redis_client: Redis, key: str) -> Job:
     return Job.from_wire(raw)
 
 
-def insert_dead_job(redis_client: Redis, name: str, enqueued_at: int, failed_at: int) -> Job:
+def insert_dead_job(
+    redis_client: Redis, name: str, enqueued_at: int, failed_at: int
+) -> Job:
     job = Job(
         name=name,
         id=make_identifier(),

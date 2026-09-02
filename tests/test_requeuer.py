@@ -27,7 +27,11 @@ def test_requeue(redis_client):
     producer.enqueue_in("bar", 3600, None)
 
     pool = WorkerPool(
-        redis_client, NAMESPACE, {"wat": noop, "foo": noop, "bar": noop}, requeuer=False, reaper=False
+        redis_client,
+        NAMESPACE,
+        {"wat": noop, "foo": noop, "bar": noop},
+        requeuer=False,
+        reaper=False,
     )
     drain_requeue(pool, f"{NAMESPACE}:scheduled")
 
@@ -46,7 +50,9 @@ def test_requeue_unknown(redis_client):
     producer = Producer(redis_client, NAMESPACE)
     producer.enqueue_in("wat", -9, None)
 
-    pool = WorkerPool(redis_client, NAMESPACE, {"bar": noop}, requeuer=False, reaper=False)
+    pool = WorkerPool(
+        redis_client, NAMESPACE, {"bar": noop}, requeuer=False, reaper=False
+    )
     drain_requeue(pool, f"{NAMESPACE}:scheduled")
 
     assert zset_size(redis_client, f"{NAMESPACE}:scheduled") == 0

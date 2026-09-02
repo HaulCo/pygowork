@@ -1,4 +1,12 @@
-from pygowork.client import Client, DeadJobRow, Queue, RetryJobRow, ScheduledJobRow, WorkerObservation, WorkerPoolHeartbeat
+from pygowork.client import (
+    Client,
+    DeadJobRow,
+    Queue,
+    RetryJobRow,
+    ScheduledJobRow,
+    WorkerObservation,
+    WorkerPoolHeartbeat,
+)
 from pygowork.consumer import JobOptions, PeriodicJob, WorkerPool
 from pygowork.cron import Schedule
 from pygowork.job import ArgumentError, Job

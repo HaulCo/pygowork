@@ -15,7 +15,9 @@ def noop(job: Job) -> None:
 
 
 def test_heartbeat(redis_client):
-    pool = WorkerPool(redis_client, NAMESPACE, {"foo": noop, "bar": noop}, concurrency=10)
+    pool = WorkerPool(
+        redis_client, NAMESPACE, {"foo": noop, "bar": noop}, concurrency=10
+    )
     before = int(time.time())
     pool.started_at = before
     pool._heartbeat()
@@ -52,18 +54,31 @@ class FlakyHeartbeatPool(WorkerPool):
 
 def test_heartbeat_loop_survives_failures(redis_client):
     pool = FlakyHeartbeatPool(
-        redis_client, NAMESPACE, {"foo": noop},
-        heartbeat_period=0.05, requeuer=False, reaper=False,
+        redis_client,
+        NAMESPACE,
+        {"foo": noop},
+        heartbeat_period=0.05,
+        requeuer=False,
+        reaper=False,
     )
     with running_pool(pool):
-        wait_until(lambda: redis_client.sismember(f"{NAMESPACE}:worker_pools", pool.pool_id))
-        first_beat = int(read_hash(redis_client, f"{NAMESPACE}:worker_pools:{pool.pool_id}")["heartbeat_at"])
+        wait_until(
+            lambda: redis_client.sismember(f"{NAMESPACE}:worker_pools", pool.pool_id)
+        )
+        first_beat = int(
+            read_hash(redis_client, f"{NAMESPACE}:worker_pools:{pool.pool_id}")[
+                "heartbeat_at"
+            ]
+        )
         # The loop must outlive the two raising beats and keep beating:
         # heartbeat_at moves past the startup beat's stamp.
         wait_until(
             lambda: int(
-                read_hash(redis_client, f"{NAMESPACE}:worker_pools:{pool.pool_id}")["heartbeat_at"]
-            ) > first_beat,
+                read_hash(redis_client, f"{NAMESPACE}:worker_pools:{pool.pool_id}")[
+                    "heartbeat_at"
+                ]
+            )
+            > first_beat,
             timeout=10,
         )
         assert pool.beats_seen > 3  # the raising beats did not end the loop

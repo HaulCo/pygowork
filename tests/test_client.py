@@ -31,8 +31,12 @@ def noop(job: Job) -> None:
 
 
 def test_worker_pool_heartbeats(redis_client):
-    pool1 = WorkerPool(redis_client, NAMESPACE, {"wat": noop, "bob": noop}, concurrency=10)
-    pool2 = WorkerPool(redis_client, NAMESPACE, {"foo": noop, "bar": noop}, concurrency=11)
+    pool1 = WorkerPool(
+        redis_client, NAMESPACE, {"wat": noop, "bob": noop}, concurrency=10
+    )
+    pool2 = WorkerPool(
+        redis_client, NAMESPACE, {"foo": noop, "bar": noop}, concurrency=11
+    )
     pool1._heartbeat()
     pool2._heartbeat()
 
@@ -71,7 +75,12 @@ def test_worker_observations(redis_client):
     producer.enqueue("foo", {"a": 3, "b": 4})
 
     pool = WorkerPool(
-        redis_client, NAMESPACE, {"wat": slow, "foo": slow}, concurrency=10, requeuer=False, reaper=False
+        redis_client,
+        NAMESPACE,
+        {"wat": slow, "foo": slow},
+        concurrency=10,
+        requeuer=False,
+        reaper=False,
     )
     client = Client(redis_client, NAMESPACE)
     with running_pool(pool):
@@ -106,7 +115,9 @@ def test_queues(redis_client):
     now = int(time.time())
 
     def stage(job_name: str, enqueued_at: int) -> None:
-        job = Job(name=job_name, id=make_identifier(), enqueued_at=enqueued_at, args=None)
+        job = Job(
+            name=job_name, id=make_identifier(), enqueued_at=enqueued_at, args=None
+        )
         redis_client.lpush(jobs_key(job_name), job.to_wire())
 
     stage("foo", now - 300)  # pushed first, so it sits at the tail: the oldest
@@ -147,7 +158,9 @@ def test_retry_jobs(redis_client):
 
     producer = Producer(redis_client, NAMESPACE)
     producer.enqueue("wat", {"a": 1, "b": 2})
-    pool = WorkerPool(redis_client, NAMESPACE, {"wat": fail}, requeuer=False, reaper=False)
+    pool = WorkerPool(
+        redis_client, NAMESPACE, {"wat": fail}, requeuer=False, reaper=False
+    )
     pool.drain()
 
     client = Client(redis_client, NAMESPACE)
@@ -168,7 +181,14 @@ def test_dead_jobs_pagination_and_delete(redis_client):
 
     producer = Producer(redis_client, NAMESPACE)
     producer.enqueue("wat", {"a": 1, "b": 2})
-    pool = WorkerPool(redis_client, NAMESPACE, {"wat": fail}, max_fails=1, requeuer=False, reaper=False)
+    pool = WorkerPool(
+        redis_client,
+        NAMESPACE,
+        {"wat": fail},
+        max_fails=1,
+        requeuer=False,
+        reaper=False,
+    )
     pool.drain()
 
     client = Client(redis_client, NAMESPACE)
@@ -208,7 +228,12 @@ def test_delete_dead_jobs_one_by_one(redis_client):
 
 
 def test_retry_dead_job(redis_client):
-    for name, failed_at in (("wat1", 12347), ("wat2", 12347), ("wat3", 12349), ("wat4", 12350)):
+    for name, failed_at in (
+        ("wat1", 12347),
+        ("wat2", 12347),
+        ("wat3", 12349),
+        ("wat4", 12350),
+    ):
         insert_dead_job(redis_client, name, 12345, failed_at)
 
     client = Client(redis_client, NAMESPACE)
@@ -291,16 +316,26 @@ def test_retry_all_dead_jobs_big(redis_client):
     pipeline = redis_client.pipeline(transaction=False)
     for _ in range(10000):
         job = Job(
-            name="wat1", id=make_identifier(), enqueued_at=12345, args=None,
-            fails=3, last_err="sorry", failed_at=12347,
+            name="wat1",
+            id=make_identifier(),
+            enqueued_at=12345,
+            args=None,
+            fails=3,
+            last_err="sorry",
+            failed_at=12347,
         )
         pipeline.zadd(f"{NAMESPACE}:dead", {job.to_wire(): 12347})
     pipeline.execute()
     redis_client.sadd(f"{NAMESPACE}:known_jobs", "wat1")
 
     unknown = Job(
-        name="dontexist", id=make_identifier(), enqueued_at=12345, args=None,
-        fails=3, last_err="sorry", failed_at=12347,
+        name="dontexist",
+        id=make_identifier(),
+        enqueued_at=12345,
+        args=None,
+        fails=3,
+        last_err="sorry",
+        failed_at=12347,
     )
     redis_client.zadd(f"{NAMESPACE}:dead", {unknown.to_wire(): 12347})
 
@@ -347,7 +382,9 @@ def test_delete_retry_job(redis_client):
 
     producer = Producer(redis_client, NAMESPACE)
     producer.enqueue("wat", {"a": 1, "b": 2})
-    pool = WorkerPool(redis_client, NAMESPACE, {"wat": fail}, requeuer=False, reaper=False)
+    pool = WorkerPool(
+        redis_client, NAMESPACE, {"wat": fail}, requeuer=False, reaper=False
+    )
     pool.drain()
 
     client = Client(redis_client, NAMESPACE)

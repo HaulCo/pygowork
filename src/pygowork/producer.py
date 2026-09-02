@@ -57,7 +57,9 @@ class Producer:
         with self._known_jobs_lock:
             self._known_jobs[job_name] = now + KNOWN_JOBS_CACHE_SECONDS
 
-    def _new_job(self, job_name: str, args: dict[str, Any] | None, unique: bool = False) -> Job:
+    def _new_job(
+        self, job_name: str, args: dict[str, Any] | None, unique: bool = False
+    ) -> Job:
         return Job(
             name=job_name,
             id=secrets.token_hex(6),
@@ -72,7 +74,9 @@ class Producer:
         self._add_to_known_jobs(job_name)
         return job
 
-    def enqueue_in(self, job_name: str, seconds_from_now: int, args: dict[str, Any] | None) -> ScheduledJob:
+    def enqueue_in(
+        self, job_name: str, seconds_from_now: int, args: dict[str, Any] | None
+    ) -> ScheduledJob:
         job = self._new_job(job_name, args)
         run_at = int(time.time()) + seconds_from_now
         self.redis.zadd(f"{self.namespace}:scheduled", {job.to_wire(): run_at})

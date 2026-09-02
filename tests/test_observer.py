@@ -15,7 +15,9 @@ def noop(job: Job) -> None:
 
 
 def make_pool(redis_client) -> WorkerPool:
-    return WorkerPool(redis_client, NAMESPACE, {"foo": noop}, requeuer=False, reaper=False)
+    return WorkerPool(
+        redis_client, NAMESPACE, {"foo": noop}, requeuer=False, reaper=False
+    )
 
 
 def observation_job() -> Job:
@@ -72,10 +74,14 @@ def test_checkin_from_job(redis_client):
     producer = Producer(redis_client, NAMESPACE)
     producer.enqueue("foo", {"a": 1, "b": "wat"})
 
-    pool = WorkerPool(redis_client, NAMESPACE, {"foo": handler}, requeuer=False, reaper=False)
+    pool = WorkerPool(
+        redis_client, NAMESPACE, {"foo": handler}, requeuer=False, reaper=False
+    )
     with running_pool(pool):
         assert checked_in.wait(5)
-        observation = read_hash(redis_client, f"{NAMESPACE}:worker:{pool.worker_ids[0]}")
+        observation = read_hash(
+            redis_client, f"{NAMESPACE}:worker:{pool.worker_ids[0]}"
+        )
         assert observation["job_name"] == "foo"
         assert observation["args"] == '{"a":1,"b":"wat"}'
         assert observation["checkin"] == "sup"

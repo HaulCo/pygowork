@@ -67,7 +67,9 @@ def test_worker_in_progress(redis_client):
     producer = Producer(redis_client, NAMESPACE)
     producer.enqueue("job1", {"a": 1})
 
-    pool = WorkerPool(redis_client, NAMESPACE, {"job1": handler}, requeuer=False, reaper=False)
+    pool = WorkerPool(
+        redis_client, NAMESPACE, {"job1": handler}, requeuer=False, reaper=False
+    )
     with running_pool(pool):
         assert entered.wait(5)
         # Mid-flight: the job left the queue for the in-progress queue, with
@@ -75,9 +77,13 @@ def test_worker_in_progress(redis_client):
         assert list_size(redis_client, jobs_key("job1")) == 0
         assert list_size(redis_client, in_progress_key(pool, "job1")) == 1
         assert get_int(redis_client, f"{jobs_key('job1')}:lock") == 1
-        assert hget_int(redis_client, f"{jobs_key('job1')}:lock_info", pool.pool_id) == 1
+        assert (
+            hget_int(redis_client, f"{jobs_key('job1')}:lock_info", pool.pool_id) == 1
+        )
 
-        observation = read_hash(redis_client, f"{NAMESPACE}:worker:{pool.worker_ids[0]}")
+        observation = read_hash(
+            redis_client, f"{NAMESPACE}:worker:{pool.worker_ids[0]}"
+        )
         assert observation["job_name"] == "job1"
         assert observation["args"] == '{"a":1}'
 
@@ -98,7 +104,9 @@ def test_worker_retry(redis_client):
     producer = Producer(redis_client, NAMESPACE)
     producer.enqueue("job1", {"a": 1})
 
-    pool = WorkerPool(redis_client, NAMESPACE, {"job1": handler}, requeuer=False, reaper=False)
+    pool = WorkerPool(
+        redis_client, NAMESPACE, {"job1": handler}, requeuer=False, reaper=False
+    )
     pool.drain()
 
     assert zset_size(redis_client, f"{NAMESPACE}:retry") == 1
@@ -208,7 +216,14 @@ def test_worker_dead(redis_client):
     producer = Producer(redis_client, NAMESPACE)
     producer.enqueue("job1", None)
 
-    pool = WorkerPool(redis_client, NAMESPACE, {"job1": handler}, max_fails=1, requeuer=False, reaper=False)
+    pool = WorkerPool(
+        redis_client,
+        NAMESPACE,
+        {"job1": handler},
+        max_fails=1,
+        requeuer=False,
+        reaper=False,
+    )
     pool.drain()
 
     assert zset_size(redis_client, f"{NAMESPACE}:retry") == 0
@@ -237,7 +252,14 @@ def test_argument_error_lands_in_dead_letter(redis_client):
     producer = Producer(redis_client, NAMESPACE)
     producer.enqueue("send_email", {"address": 7})
 
-    pool = WorkerPool(redis_client, NAMESPACE, {"send_email": handler}, max_fails=1, requeuer=False, reaper=False)
+    pool = WorkerPool(
+        redis_client,
+        NAMESPACE,
+        {"send_email": handler},
+        max_fails=1,
+        requeuer=False,
+        reaper=False,
+    )
     pool.drain()
 
     _, dead = job_on_zset(redis_client, f"{NAMESPACE}:dead")
@@ -254,7 +276,9 @@ def test_workers_paused(redis_client):
     producer.enqueue("job1", {"a": 1})
 
     redis_client.set(f"{jobs_key('job1')}:paused", "1")
-    pool = WorkerPool(redis_client, NAMESPACE, {"job1": handler}, requeuer=False, reaper=False)
+    pool = WorkerPool(
+        redis_client, NAMESPACE, {"job1": handler}, requeuer=False, reaper=False
+    )
 
     # Paused: the fetch Lua refuses the queue, so drain returns with the job
     # still queued and untouched.

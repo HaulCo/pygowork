@@ -25,7 +25,10 @@ GO_DURATION_PATTERN = re.compile(r"(\d+(?:\.\d+)?)(h|ms|m|s)")
 def parse_go_duration(text: str) -> timedelta:
     total = 0.0
     matched = GO_DURATION_PATTERN.findall(text.strip())
-    if not matched or "".join(f"{value}{unit}" for value, unit in matched) != text.strip():
+    if (
+        not matched
+        or "".join(f"{value}{unit}" for value, unit in matched) != text.strip()
+    ):
         raise ValueError(f"unparseable duration: {text!r}")
     for value, unit in matched:
         total += float(value) * GO_DURATION_UNITS[unit]
@@ -48,4 +51,6 @@ class Schedule:
     def next_after(self, moment: datetime) -> datetime:
         if self._interval is not None:
             return moment + self._interval
-        return croniter(self._expression, moment, second_at_beginning=True).get_next(datetime)
+        return croniter(self._expression, moment, second_at_beginning=True).get_next(
+            datetime
+        )

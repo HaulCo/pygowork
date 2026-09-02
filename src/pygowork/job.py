@@ -31,7 +31,9 @@ class Job:
     checkin: Callable[[str], None] = field(default=lambda message: None)
 
     @classmethod
-    def from_wire(cls, raw: bytes, dequeued_from: str = "", in_progress_queue: str = "") -> "Job":
+    def from_wire(
+        cls, raw: bytes, dequeued_from: str = "", in_progress_queue: str = ""
+    ) -> "Job":
         payload = json.loads(raw)
         return cls(
             name=payload["name"],
@@ -61,7 +63,9 @@ class Job:
             raise ArgumentError(f"job {self.name!r} arg {key!r}: missing")
         value = self.args[key]
         if isinstance(value, bool) and expected_type is not bool:
-            raise ArgumentError(f"job {self.name!r} arg {key!r}: expected {expected_type.__name__}, got bool")
+            raise ArgumentError(
+                f"job {self.name!r} arg {key!r}: expected {expected_type.__name__}, got bool"
+            )
         if expected_type is float and isinstance(value, int):
             return float(value)
         if not isinstance(value, expected_type):
@@ -71,7 +75,12 @@ class Job:
         return value
 
     def to_wire(self) -> str:
-        payload: dict[str, Any] = {"name": self.name, "id": self.id, "t": self.enqueued_at, "args": self.args}
+        payload: dict[str, Any] = {
+            "name": self.name,
+            "id": self.id,
+            "t": self.enqueued_at,
+            "args": self.args,
+        }
         if self.unique:
             payload["unique"] = True
         if self.fails:

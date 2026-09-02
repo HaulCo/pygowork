@@ -114,11 +114,15 @@ class WorkerPool:
         self.namespace = namespace
         self.handlers = handlers
         self.concurrency = concurrency
-        self.options = {name: (options or {}).get(name, JobOptions()) for name in handlers}
+        self.options = {
+            name: (options or {}).get(name, JobOptions()) for name in handlers
+        }
         self.priorities = {
-            name: self.options[name].priority
-            if self.options[name].priority is not None
-            else (priorities or {}).get(name, 1)
+            name: (
+                self.options[name].priority
+                if self.options[name].priority is not None
+                else (priorities or {}).get(name, 1)
+            )
             for name in handlers
         }
         self.max_fails = max_fails
@@ -158,11 +162,14 @@ class WorkerPool:
         handlers are restored on the way out."""
         previous_handlers = {}
         if handle_signals:
+
             def stop_on_signal(signal_number, frame) -> None:
                 self.stop()
 
             for signal_number in (signal.SIGINT, signal.SIGTERM):
-                previous_handlers[signal_number] = signal.signal(signal_number, stop_on_signal)
+                previous_handlers[signal_number] = signal.signal(
+                    signal_number, stop_on_signal
+                )
         self.started_at = int(time.time())
         self._write_concurrency_controls()
         self._heartbeat()
@@ -225,7 +232,10 @@ class WorkerPool:
             return
         pipeline = self.redis.pipeline(transaction=False)
         for name in self.handlers:
-            pipeline.set(f"{self._jobs_key(name)}:max_concurrency", self.options[name].max_concurrency)
+            pipeline.set(
+                f"{self._jobs_key(name)}:max_concurrency",
+                self.options[name].max_concurrency,
+            )
         pipeline.execute()
 
     # -- worker loop / fetch / process / complete, mirroring worker.go --
@@ -251,7 +261,10 @@ class WorkerPool:
                 # A Redis error while completing must not kill the worker
                 # thread; Go logs and keeps looping. The job stays in the
                 # in-progress queue, the same leak Go accepts here.
-                logger.exception("processing failed", extra={"job": fetched.name, "job_id": fetched.id})
+                logger.exception(
+                    "processing failed",
+                    extra={"job": fetched.name, "job_id": fetched.id},
+                )
 
     def _sampled_job_names(self) -> list[str]:
         """Priority-weighted order without replacement, gocraft's sampling intent."""
@@ -349,7 +362,11 @@ class WorkerPool:
         if run_error is not None:
             now = int(time.time())
             job_options = self.options[job.name]
-            max_fails = job_options.max_fails if job_options.max_fails is not None else self.max_fails
+            max_fails = (
+                job_options.max_fails
+                if job_options.max_fails is not None
+                else self.max_fails
+            )
             job.fails += 1
             job.last_err = str(run_error)
             job.failed_at = now
@@ -359,7 +376,9 @@ class WorkerPool:
                     if job_options.backoff is not None
                     else default_backoff_seconds(job.fails)
                 )
-                pipeline.zadd(self._key("retry"), {job.to_wire(): now + backoff_seconds})
+                pipeline.zadd(
+                    self._key("retry"), {job.to_wire(): now + backoff_seconds}
+                )
             elif not job_options.skip_dead:
                 pipeline.zadd(self._key("dead"), {job.to_wire(): now})
         pipeline.execute()
@@ -376,10 +395,16 @@ class WorkerPool:
                     logger.exception("requeue failed", extra={"zset": zset})
 
     def _requeue_once(self, zset: str) -> bool:
-        keys = [zset, self._key("dead")] + [self._jobs_key(name) for name in self.handlers]
-        result = self.redis.eval(ZREM_LPUSH, len(keys), *keys, self._key("jobs:"), int(time.time()))
+        keys = [zset, self._key("dead")] + [
+            self._jobs_key(name) for name in self.handlers
+        ]
+        result = self.redis.eval(
+            ZREM_LPUSH, len(keys), *keys, self._key("jobs:"), int(time.time())
+        )
         if result == b"dead":
-            logger.error("requeued job had no known queue; dead-lettered", extra={"zset": zset})
+            logger.error(
+                "requeued job had no known queue; dead-lettered", extra={"zset": zset}
+            )
         return result in (b"ok", b"dead")
 
     # -- periodic enqueuer, mirroring periodic_enqueuer.go --
@@ -390,7 +415,9 @@ class WorkerPool:
                 if self._should_enqueue_periodic():
                     self._enqueue_periodic()
             except Exception:
-                logger.exception("periodic enqueue failed", extra={"pool_id": self.pool_id})
+                logger.exception(
+                    "periodic enqueue failed", extra={"pool_id": self.pool_id}
+                )
             if self._stop.wait(self.periodic_sleep + random.randint(0, 30)):
                 return
 
@@ -432,7 +459,9 @@ class WorkerPool:
                 self._reap()
             except Exception:
                 logger.exception("reap failed")
-            if self._stop.wait(self.reap_period + random.randint(0, REAP_JITTER_SECONDS)):
+            if self._stop.wait(
+                self.reap_period + random.randint(0, REAP_JITTER_SECONDS)
+            ):
                 return
 
     def _reap(self) -> None:
@@ -445,7 +474,10 @@ class WorkerPool:
                 lock_job_names = list(self.handlers)
             self.redis.srem(self._key("worker_pools"), dead_pool_id)
             self._clean_stale_lock_info(dead_pool_id, lock_job_names)
-            logger.info("reaped dead pool", extra={"dead_pool_id": dead_pool_id, "jobs": job_names})
+            logger.info(
+                "reaped dead pool",
+                extra={"dead_pool_id": dead_pool_id, "jobs": job_names},
+            )
 
     def _find_dead_pools(self) -> dict[str, list[str]]:
         dead = {}
@@ -470,8 +502,15 @@ class WorkerPool:
         keys = []
         for name in job_names:
             jobs = self._jobs_key(name)
-            keys += [f"{jobs}:{dead_pool_id}:inprogress", jobs, f"{jobs}:lock", f"{jobs}:lock_info"]
-        while self.redis.eval(REENQUEUE_JOB, len(keys), *keys, dead_pool_id) is not None:
+            keys += [
+                f"{jobs}:{dead_pool_id}:inprogress",
+                jobs,
+                f"{jobs}:lock",
+                f"{jobs}:lock_info",
+            ]
+        while (
+            self.redis.eval(REENQUEUE_JOB, len(keys), *keys, dead_pool_id) is not None
+        ):
             pass
 
     def _clean_stale_lock_info(self, dead_pool_id: str, job_names: list[str]) -> None:

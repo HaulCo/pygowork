@@ -11,7 +11,9 @@ from helpers import NAMESPACE
 def clean_keyspace(redis_client: Redis) -> None:
     cursor = 0
     while True:
-        cursor, keys = redis_client.scan(cursor=cursor, match=f"{NAMESPACE}:*", count=500)
+        cursor, keys = redis_client.scan(
+            cursor=cursor, match=f"{NAMESPACE}:*", count=500
+        )
         if keys:
             redis_client.delete(*keys)
         if cursor == 0:

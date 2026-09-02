@@ -45,7 +45,14 @@ def test_stop_finishes_in_flight_jobs(redis_client):
     for _ in range(total_jobs):
         producer.enqueue("sample_job", {})
 
-    pool = WorkerPool(redis_client, NAMESPACE, {"sample_job": handler}, concurrency=2, requeuer=False, reaper=False)
+    pool = WorkerPool(
+        redis_client,
+        NAMESPACE,
+        {"sample_job": handler},
+        concurrency=2,
+        requeuer=False,
+        reaper=False,
+    )
     with running_pool(pool):
         wait_until(lambda: counters["started"] >= 4)
 
@@ -81,7 +88,9 @@ def test_handle_signals_stops_the_pool(redis_client):
     previous_sigint = signal.getsignal(signal.SIGINT)
     previous_sigterm = signal.getsignal(signal.SIGTERM)
 
-    pool = WorkerPool(redis_client, NAMESPACE, {"wat": lambda job: None}, requeuer=False, reaper=False)
+    pool = WorkerPool(
+        redis_client, NAMESPACE, {"wat": lambda job: None}, requeuer=False, reaper=False
+    )
     interrupter = threading.Timer(0.3, lambda: os.kill(os.getpid(), signal.SIGINT))
     interrupter.start()
     try:
@@ -127,7 +136,9 @@ def test_max_concurrency_single_threaded(redis_client):
     )
     with running_pool(pool):
         wait_until(lambda: state["done"] == total_jobs, timeout=15)
-        assert get_int(redis_client, f"{jobs_key('job1')}:max_concurrency") == 1  # written at startup
+        assert (
+            get_int(redis_client, f"{jobs_key('job1')}:max_concurrency") == 1
+        )  # written at startup
         assert get_int(redis_client, f"{jobs_key('job1')}:lock") <= 1
 
     assert state["max_seen"] == 1

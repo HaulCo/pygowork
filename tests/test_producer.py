@@ -11,7 +11,9 @@ from pygowork import Job, Producer, WorkerPool
 
 
 def known_jobs(redis_client: Redis) -> list[str]:
-    return sorted(member.decode() for member in redis_client.smembers(f"{NAMESPACE}:known_jobs"))
+    return sorted(
+        member.decode() for member in redis_client.smembers(f"{NAMESPACE}:known_jobs")
+    )
 
 
 def assert_fresh_job(job: Job, args: dict | None) -> None:
@@ -90,8 +92,12 @@ def test_enqueue_unique(redis_client):
     assert_fresh_job(job, {"a": 1, "b": "cool"})
 
     assert producer.enqueue_unique("wat", {"a": 1, "b": "cool"}) is None  # duplicate
-    assert producer.enqueue_unique("wat", {"a": 1, "b": "coolio"}) is not None  # different args
-    assert producer.enqueue_unique("wat", None) is not None  # nil args are their own signature
+    assert (
+        producer.enqueue_unique("wat", {"a": 1, "b": "coolio"}) is not None
+    )  # different args
+    assert (
+        producer.enqueue_unique("wat", None) is not None
+    )  # nil args are their own signature
     assert producer.enqueue_unique("wat", None) is None  # duplicate nil args
     assert producer.enqueue_unique("taw", None) is not None  # different name
 

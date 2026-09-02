@@ -37,7 +37,15 @@ def test_omitempty_fields_absent_until_set():
 
 
 def test_failure_fields_serialize_like_go():
-    job = Job(name="wat", id="abc", enqueued_at=5, args={"a": 1}, fails=2, last_err="boom", failed_at=99)
+    job = Job(
+        name="wat",
+        id="abc",
+        enqueued_at=5,
+        args={"a": 1},
+        fails=2,
+        last_err="boom",
+        failed_at=99,
+    )
     payload = json.loads(job.to_wire())
     assert payload["fails"] == 2
     assert payload["err"] == "boom"
@@ -51,7 +59,9 @@ def test_unique_flag_round_trip():
 
 
 def test_fetched_job_carries_queue_provenance():
-    job = Job.from_wire(b'{"name":"wat","id":"abc","t":1,"args":null}', "src_queue", "inprog_queue")
+    job = Job.from_wire(
+        b'{"name":"wat","id":"abc","t":1,"args":null}', "src_queue", "inprog_queue"
+    )
     assert job.dequeued_from == "src_queue"
     assert job.in_progress_queue == "inprog_queue"
 
@@ -66,7 +76,9 @@ def arg_job(args: dict | None) -> Job:
 
 
 def test_arg_returns_typed_values():
-    job = arg_job({"address": "jo@example.com", "count": 3, "rate": 1.5, "urgent": True})
+    job = arg_job(
+        {"address": "jo@example.com", "count": 3, "rate": 1.5, "urgent": True}
+    )
     assert job.arg("address", str) == "jo@example.com"
     assert job.arg("count", int) == 3
     assert job.arg("rate", float) == 1.5
@@ -86,7 +98,9 @@ def test_arg_missing_when_args_is_none():
 
 def test_arg_wrong_type_names_both_types():
     job = arg_job({"address": 7})
-    with pytest.raises(ArgumentError, match=r"job 'send_email' arg 'address': expected str, got int"):
+    with pytest.raises(
+        ArgumentError, match=r"job 'send_email' arg 'address': expected str, got int"
+    ):
         job.arg("address", str)
 
 

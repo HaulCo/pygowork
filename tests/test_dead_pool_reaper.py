@@ -15,7 +15,12 @@ def noop(job: Job) -> None:
     return None
 
 
-def stage_pool(redis_client: Redis, pool_id: str, heartbeat_at: int | None = None, job_names: str | None = None) -> None:
+def stage_pool(
+    redis_client: Redis,
+    pool_id: str,
+    heartbeat_at: int | None = None,
+    job_names: str | None = None,
+) -> None:
     redis_client.sadd(f"{NAMESPACE}:worker_pools", pool_id)
     mapping = {}
     if heartbeat_at is not None:
@@ -33,7 +38,10 @@ def test_reaper_requeues_dead_pools(redis_client):
     stage_pool(redis_client, "3", heartbeat_at=now - 3600, job_names="type1,type2")
 
     reaper = WorkerPool(redis_client, NAMESPACE, {}, requeuer=False, reaper=False)
-    assert reaper._find_dead_pools() == {"2": ["type1", "type2"], "3": ["type1", "type2"]}
+    assert reaper._find_dead_pools() == {
+        "2": ["type1", "type2"],
+        "3": ["type1", "type2"],
+    }
 
     # Pool 2 died with a job in progress and a lock held.
     redis_client.lpush(f"{jobs_key('type1')}:2:inprogress", "foo")
@@ -67,7 +75,9 @@ def test_reaper_no_heartbeat(redis_client):
         redis_client.hset(f"{jobs_key('type1')}:lock_info", pool_id, 1)
     redis_client.lpush(f"{jobs_key('type1')}:2:inprogress", "foo")
 
-    reaper = WorkerPool(redis_client, NAMESPACE, {"type1": noop}, requeuer=False, reaper=False)
+    reaper = WorkerPool(
+        redis_client, NAMESPACE, {"type1": noop}, requeuer=False, reaper=False
+    )
     assert reaper._find_dead_pools() == {"1": [], "2": [], "3": []}
 
     reaper._reap()
@@ -103,10 +113,19 @@ def test_reaper_skips_pool_without_job_names(redis_client):
 
 
 def test_clean_stale_locks(redis_client):
-    reaper = WorkerPool(redis_client, NAMESPACE, {"type1": noop, "type2": noop}, requeuer=False, reaper=False)
+    reaper = WorkerPool(
+        redis_client,
+        NAMESPACE,
+        {"type1": noop, "type2": noop},
+        requeuer=False,
+        reaper=False,
+    )
     job_names = ["type1", "type2"]
     lock1, lock2 = f"{jobs_key('type1')}:lock", f"{jobs_key('type2')}:lock"
-    lock_info1, lock_info2 = f"{jobs_key('type1')}:lock_info", f"{jobs_key('type2')}:lock_info"
+    lock_info1, lock_info2 = (
+        f"{jobs_key('type1')}:lock_info",
+        f"{jobs_key('type2')}:lock_info",
+    )
 
     redis_client.set(lock1, 3)
     redis_client.set(lock2, 1)

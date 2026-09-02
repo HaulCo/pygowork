@@ -110,6 +110,6 @@ def test_sampler_matches_exact_permutation_probabilities(redis_client):
 
     for ordering, probability in expected.items():
         frequency = observed.get(ordering, 0) / total
-        assert abs(frequency - probability) < 0.01, (
-            f"{ordering}: observed {frequency:.4f}, expected {probability:.4f}"
-        )
+        assert (
+            abs(frequency - probability) < 0.01
+        ), f"{ordering}: observed {frequency:.4f}, expected {probability:.4f}"

@@ -16,7 +16,9 @@ from pygowork import Job, PeriodicJob, WorkerPool
 SPECS = [
     PeriodicJob(spec="0/29 * * * * *", job_name="foo"),  # seconds 0 and 29
     PeriodicJob(spec="3/49 * * * * *", job_name="bar"),  # seconds 3 and 52
-    PeriodicJob(spec="* * * 2 * *", job_name="baz"),  # every second on the 2nd of the month
+    PeriodicJob(
+        spec="* * * 2 * *", job_name="baz"
+    ),  # every second on the 2nd of the month
 ]
 
 
@@ -29,7 +31,9 @@ def enqueue_twice_within_one_second(pool: WorkerPool, redis_client) -> int:
     until that provably happened) so the expected set can be computed from
     the anchor and the double call proves byte-identical dedup."""
     for _ in range(20):
-        redis_client.delete(f"{NAMESPACE}:scheduled", f"{NAMESPACE}:last_periodic_enqueue")
+        redis_client.delete(
+            f"{NAMESPACE}:scheduled", f"{NAMESPACE}:last_periodic_enqueue"
+        )
         anchor = int(time.time())
         pool._enqueue_periodic()
         pool._enqueue_periodic()
@@ -56,7 +60,9 @@ def test_periodic_enqueue_is_deterministic(redis_client):
         moment = periodic.schedule.next_after(datetime.fromtimestamp(anchor))
         while moment < horizon:
             epoch = int(moment.timestamp())
-            expected.add((f"periodic:{periodic.job_name}:{periodic.spec}:{epoch}", epoch))
+            expected.add(
+                (f"periodic:{periodic.job_name}:{periodic.spec}:{epoch}", epoch)
+            )
             moment = periodic.schedule.next_after(moment)
 
     rows = redis_client.zrange(f"{NAMESPACE}:scheduled", 0, -1, withscores=True)
@@ -78,7 +84,11 @@ def test_periodic_enqueue_is_deterministic(redis_client):
 
 def test_should_enqueue_periodic(redis_client):
     pool = WorkerPool(
-        redis_client, NAMESPACE, {"foo": noop}, requeuer=False, reaper=False,
+        redis_client,
+        NAMESPACE,
+        {"foo": noop},
+        requeuer=False,
+        reaper=False,
         periodic=[PeriodicJob(spec="0 * * * * *", job_name="foo")],
     )
 
